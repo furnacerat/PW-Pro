@@ -1,0 +1,28 @@
+.DS_Store
+.build/
+build/
+DerivedData/
+xcuserdata/
+*.xcworkspace
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+Packages/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/
+
+# Fastlane
+fastlane/
+
+# macOS swap/temp
+*.swp
+*~
+
+# Environment files
+.env
+.env.local

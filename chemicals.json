@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Sodium Hypochlorite (Bleach)",
+    "shortDescription": "Chlorine-based oxidizing bleach used for whitening and disinfection.",
+    "uses": "Mildew/mold removal, sanitizing siding, decks, concrete; organic stain removal.",
+    "precautions": "Corrosive to skin/eyes; produces toxic gases if mixed with acids or ammonia; wear gloves, goggles, and respirator for fumes; control runoff.",
+    "mixingNote": "Typically diluted for surface cleaning; follow product label for concentration.",
+    "sdsURL": null
+  },
+  {
+    "name": "Sodium Percarbonate (Oxygen Bleach)",
+    "shortDescription": "Oxygen-based powdered bleach that releases hydrogen peroxide.",
+    "uses": "Brightening wood and concrete; gentler mold/algae removal alternative to chlorine.",
+    "precautions": "Oxidizer; eye/skin irritant; keep dry in storage; use gloves and goggles.",
+    "mixingNote": "Dissolve per manufacturer's instructions; active at warm temperatures.",
+    "sdsURL": null
+  },
+  {
+    "name": "Sodium Hydroxide (Caustic Soda)",
+    "shortDescription": "Strong alkaline cleaner and degreaser.",
+    "uses": "Strips heavy grease, oils, some coatings; used in heavy-duty concrete and equipment cleaners.",
+    "precautions": "Highly corrosive — causes severe burns and eye damage. Use acid/alkali-resistant PPE, face shield, and avoid inhalation.",
+    "mixingNote": "Prepare diluted solutions carefully, add pellets to water slowly; never add water to pellets.",
+    "sdsURL": null
+  },
+  {
+    "name": "Potassium Hydroxide (KOH)",
+    "shortDescription": "Strong alkaline used in some heavy-duty detergents.",
+    "uses": "Degreasing and heavy cleaning where strong alkalinity is required.",
+    "precautions": "Same as sodium hydroxide — corrosive; full PPE required.",
+    "mixingNote": "Follow product instructions for dilution and temperature.",
+    "sdsURL": null
+  },
+  {
+    "name": "Trisodium Phosphate (TSP)",
+    "shortDescription": "Heavy-duty degreaser and detergent builder.",
+    "uses": "Surface prep, removing built-up grime and grease before painting or sealing.",
+    "precautions": "Irritant; environmental concerns (eutrophication). Contain rinse water and limit phosphate discharge.",
+    "mixingNote": "Use as directed; avoid overuse near drains.",
+    "sdsURL": null
+  },
+  {
+    "name": "Sodium Metasilicate",
+    "shortDescription": "Alkaline builder used in industrial cleaners.",
+    "uses": "Boosts detergency, emulsifies oils and greases.",
+    "precautions": "Corrosive; can cause skin/eye burns. Use gloves and eye protection.",
+    "mixingNote": "Dissolve per label; avoid incompatible mixes.",
+    "sdsURL": null
+  },
+  {
+    "name": "Nonionic Surfactants",
+    "shortDescription": "Wetting agents and detergents (e.g., alkyl polyglucosides).",
+    "uses": "General-purpose cleaners; reduce surface tension to improve cleaning.",
+    "precautions": "Mild-moderate irritant; choose biodegradable types where possible.",
+    "mixingNote": "Typically added at low concentrations per formulation.",
+    "sdsURL": null
+  },
+  {
+    "name": "Anionic Surfactants",
+    "shortDescription": "Detergents for removing soils and greases.",
+    "uses": "Concrete and siding cleaners; strong foaming detergents.",
+    "precautions": "Irritant; do not mix with cationic disinfectants.",
+    "mixingNote": "Follow dilution guidance; rinsing prevents residue.",
+    "sdsURL": null
+  },
+  {
+    "name": "Cationic Surfactants / Quats",
+    "shortDescription": "Disinfectant and algaecide class (quaternary ammonium compounds).",
+    "uses": "Disinfecting surfaces and algae control in some treatments.",
+    "precautions": "Irritant and toxic to aquatic life; incompatible with anionic detergents and some oxidizers.",
+    "mixingNote": "Observe required contact time for disinfection; dilute per label.",
+    "sdsURL": null
+  },
+  {
+    "name": "Hydrochloric Acid (Muriatic Acid)",
+    "shortDescription": "Strong mineral acid for removing mineral deposits and rust stains.",
+    "uses": "Etching concrete, removing efflorescence and rust from masonry.",
+    "precautions": "Highly corrosive and fuming; severe inhalation hazard and skin burns. Never mix with bleach.",
+    "mixingNote": "Always add acid to water slowly; use acid-rated PPE and containment.",
+    "sdsURL": null
+  },
+  {
+    "name": "Phosphoric Acid",
+    "shortDescription": "Acid cleaner used for rust and mineral removal.",
+    "uses": "Concrete cleaning and rust stain removal; milder than HCl in some uses.",
+    "precautions": "Corrosive; use PPE and contain runoff.",
+    "mixingNote": "Dilute per product guidance.",
+    "sdsURL": null
+  },
+  {
+    "name": "Oxalic Acid",
+    "shortDescription": "Organic acid effective at rust and tannin stain removal.",
+    "uses": "Rust stain extraction on concrete and wood tannin removal.",
+    "precautions": "Toxic if ingested; skin/eye irritant. Use gloves and goggles.",
+    "mixingNote": "Use in recommended dilute solutions; rinse thoroughly.",
+    "sdsURL": null
+  },
+  {
+    "name": "Citric Acid",
+    "shortDescription": "Mild organic acid for descaling and stain removal.",
+    "uses": "Mild mineral stain removal and pH adjustment; safer alternative for some uses.",
+    "precautions": "Irritant at high concentrations; wear gloves and eye protection.",
+    "mixingNote": "Dissolve to recommended concentration; safe disposal.",
+    "sdsURL": null
+  },
+  {
+    "name": "Enzymatic Cleaners",
+    "shortDescription": "Biological cleaners using enzymes (proteases, lipases).",
+    "uses": "Break down organic soils, odors, and biological stains.",
+    "precautions": "Possible allergens; store per vendor guidance and use PPE.",
+    "mixingNote": "Effective within specific pH and temperature ranges — follow label.",
+    "sdsURL": null
+  },
+  {
+    "name": "D-Limonene (Citrus Solvent)",
+    "shortDescription": "Citrus-derived solvent for adhesive and heavy grease removal.",
+    "uses": "Tar, sap, and adhesive removal; degreasing.",
+    "precautions": "Flammable and possible skin sensitizer; use ventilation and gloves.",
+    "mixingNote": "Used neat or diluted per product; avoid ignition sources.",
+    "sdsURL": null
+  },
+  {
+    "name": "Petroleum-based Solvents (Mineral Spirits)",
+    "shortDescription": "Hydrocarbon solvents for heavy degreasing.",
+    "uses": "Paint thinning, adhesive and heavy oil removal.",
+    "precautions": "Flammable and inhalation toxic; use respirator and fire controls.",
+    "mixingNote": "Use in well-ventilated areas and per manufacturer guidance.",
+    "sdsURL": null
+  },
+  {
+    "name": "Chelating Agents (EDTA / GLDA)",
+    "shortDescription": "Bind metal ions to improve cleaning performance.",
+    "uses": "Scale control, stain removal, and improved rinsing.",
+    "precautions": "Environmental persistence concerns for some chelants; prefer biodegradable options.",
+    "mixingNote": "Follow formulation instructions; avoid unnecessary discharge.",
+    "sdsURL": null
+  },
+  {
+    "name": "Calcium Hypochlorite / Sodium Dichloroisocyanurate",
+    "shortDescription": "Solid chlorine sources used in some disinfectant products.",
+    "uses": "Disinfection and sanitizing when liquid bleach not used.",
+    "precautions": "Strong oxidizers; store dry away from organics; reactive with acids; PPE required.",
+    "mixingNote": "Dissolve per label and avoid mixing with incompatible chemicals.",
+    "sdsURL": null
+  }
+]
