@@ -26,6 +26,8 @@ struct PW_ProApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(EstimatesStore())
+                .environmentObject(ScheduleStore())
         }
         .modelContainer(sharedModelContainer)
     }

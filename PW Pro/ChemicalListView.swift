@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct ChemicalListView: View {
-    let chemicals = ChemicalData.chemicals
+    @State private var chemicals: [Chemical] = []
 
     var body: some View {
         List {
-            ForEach(chemicals) { chem in
-                NavigationLink(value: chem) {
+            ForEach(chemicals, id: \.id) { chem in
+                NavigationLink(destination: ChemicalDetailView(chemical: chem)) {
                     HStack(alignment: .top, spacing: 12) {
                         Circle()
                             .fill(Color.accentColor.opacity(0.2))
@@ -44,10 +44,11 @@ struct ChemicalListView: View {
             }
         }
         .navigationTitle("Chemical List")
-        .navigationDestination(for: Chemical.self) { chem in
-            ChemicalDetailView(chemical: chem)
-        }
         .listStyle(.insetGrouped)
+        .onAppear {
+            // Load from ChemicalData; this ensures we pick up bundle or dev fallback at runtime
+            self.chemicals = ChemicalData.chemicals
+        }
     }
 }
 

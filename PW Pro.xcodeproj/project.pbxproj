@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		2B6711012F1EFB0300E67F2C /* chemicals.json in Resources */ = {isa = PBXBuildFile; fileRef = 2B6711002F1EFB0300E67F2C /* chemicals.json */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		2B670EE42F1EFB0300E67F2C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		2B670ED42F1EFB0300E67F2C /* PW Pro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PW Pro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B670EE32F1EFB0300E67F2C /* PW ProTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PW ProTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B670EED2F1EFB0300E67F2C /* PW ProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PW ProUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2B6711002F1EFB0300E67F2C /* chemicals.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = chemicals.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -79,6 +84,7 @@
 				2B670EE62F1EFB0300E67F2C /* PW ProTests */,
 				2B670EF02F1EFB0300E67F2C /* PW ProUITests */,
 				2B670ED52F1EFB0300E67F2C /* Products */,
+				2B6710A42F1F2AC700E67F2C /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -90,6 +96,14 @@
 				2B670EED2F1EFB0300E67F2C /* PW ProUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		2B6710A42F1F2AC700E67F2C /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				2B6711002F1EFB0300E67F2C /* chemicals.json */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +226,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B6711012F1EFB0300E67F2C /* chemicals.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -14,10 +14,10 @@ struct MainMenuView: View {
                 Section("Field Tools") {
                     NavigationLink("Chemical List", destination: ChemicalListView())
                     NavigationLink("Chemical Calculator", destination: ChemicalCalculatorView())
-                    NavigationLink("Estimates", destination: PlaceholderView(title: "Estimates"))
-                    NavigationLink("Scheduling", destination: PlaceholderView(title: "Scheduling"))
-                    NavigationLink("Weather Guide", destination: PlaceholderView(title: "Weather Guide"))
-                    NavigationLink("Measuring", destination: PlaceholderView(title: "Measuring"))
+                    NavigationLink("Estimates", destination: EstimatesView())
+                    NavigationLink("Scheduling", destination: SchedulingView())
+                    NavigationLink("Weather Guide", destination: WeatherView())
+                    NavigationLink("Measuring", destination: MeasuringView())
                     NavigationLink("UpCharge", destination: PlaceholderView(title: "UpCharge"))
                 }
 
