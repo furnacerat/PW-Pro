@@ -58,7 +58,8 @@ struct ChemicalDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 Text(chemical.name)
-                    .font(.system(.largeTitle, weight: .bold, design: .rounded))
+                    .font(.system(.largeTitle, design: .rounded))
+                    .fontWeight(.bold)
                     .foregroundColor(.accentColor)
 
                 if let brands = chemical.brands, !brands.isEmpty {
@@ -80,20 +81,23 @@ struct ChemicalDetailView: View {
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Uses")
-                        .font(.system(.title2, weight: .semibold, design: .rounded))
+                        .font(.system(.title2, design: .rounded))
+                        .fontWeight(.semibold)
                     Text(chemical.uses)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Precautions")
-                        .font(.system(.title2, weight: .semibold, design: .rounded))
+                        .font(.system(.title2, design: .rounded))
+                        .fontWeight(.semibold)
                     Text(chemical.precautions)
                         .foregroundColor(.secondary)
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Mixing Note")
-                        .font(.system(.title2, weight: .semibold, design: .rounded))
+                        .font(.system(.title2, design: .rounded))
+                        .fontWeight(.semibold)
                     Text(chemical.mixingNote)
                 }
 
