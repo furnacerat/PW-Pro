@@ -193,7 +193,21 @@ struct SignInWithAppleButtonView: UIViewRepresentable {
         }
 
         func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-            return UIApplication.shared.windows.first { $0.isKeyWindow } ?? ASPresentationAnchor()
+            // Prefer the key window from an active window scene (no use of deprecated `windows`).
+            if let keyWindow = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows })
+                .first(where: { $0.isKeyWindow }) {
+                return keyWindow
+            }
+
+            // Fallback: attach a new UIWindow to the first available UIWindowScene.
+            if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {
+                return UIWindow(windowScene: scene)
+            }
+
+            // Last resort (very unlikely) — return an empty anchor.
+            return ASPresentationAnchor()
         }
 
         func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
