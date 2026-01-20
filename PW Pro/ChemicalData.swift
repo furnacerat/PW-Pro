@@ -1,124 +1,26 @@
 import Foundation
 
 struct ChemicalData {
-    static let chemicals: [Chemical] = [
-        Chemical(name: "Sodium Hypochlorite (Bleach)",
-                 shortDescription: "Chlorine-based oxidizing bleach used for whitening and disinfection.",
-                 uses: "Mildew/mold removal, sanitizing siding, decks, concrete; organic stain removal.",
-                 precautions: "Corrosive to skin/eyes; produces toxic gases if mixed with acids or ammonia; wear gloves, goggles, and respirator for fumes; control runoff.",
-                 mixingNote: "Typically diluted for surface cleaning; follow product label for concentration.",
-                 sdsURL: nil),
+    static var chemicals: [Chemical] = load()
 
-        Chemical(name: "Sodium Percarbonate (Oxygen Bleach)",
-                 shortDescription: "Oxygen-based powdered bleach that releases hydrogen peroxide.",
-                 uses: "Brightening wood and concrete; gentler mold/algae removal alternative to chlorine.",
-                 precautions: "Oxidizer; eye/skin irritant; keep dry in storage; use gloves and goggles.",
-                 mixingNote: "Dissolve per manufacturer's instructions; active at warm temperatures.",
-                 sdsURL: nil),
+    static func load() -> [Chemical] {
+        // Attempt to load bundled JSON first
+        if let url = Bundle.main.url(forResource: "chemicals", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                let list = try decoder.decode([Chemical].self, from: data)
+                return list
+            } catch {
+                print("Failed to decode chemicals.json: \(error)")
+            }
+        } else {
+            print("chemicals.json not found in bundle — using fallback list")
+        }
 
-        Chemical(name: "Sodium Hydroxide (Caustic Soda)",
-                 shortDescription: "Strong alkaline cleaner and degreaser.",
-                 uses: "Strips heavy grease, oils, some coatings; used in heavy-duty concrete and equipment cleaners.",
-                 precautions: "Highly corrosive — causes severe burns and eye damage. Use acid/alkali-resistant PPE, face shield, and avoid inhalation.",
-                 mixingNote: "Prepare diluted solutions carefully, add pellets to water slowly; never add water to pellets.",
-                 sdsURL: nil),
-
-        Chemical(name: "Potassium Hydroxide (KOH)",
-                 shortDescription: "Strong alkaline used in some heavy-duty detergents.",
-                 uses: "Degreasing and heavy cleaning where strong alkalinity is required.",
-                 precautions: "Same as sodium hydroxide — corrosive; full PPE required.",
-                 mixingNote: "Follow product instructions for dilution and temperature.",
-                 sdsURL: nil),
-
-        Chemical(name: "Trisodium Phosphate (TSP)",
-                 shortDescription: "Heavy-duty degreaser and detergent builder.",
-                 uses: "Surface prep, removing built-up grime and grease before painting or sealing.",
-                 precautions: "Irritant; environmental concerns (eutrophication). Contain rinse water and limit phosphate discharge.",
-                 mixingNote: "Use as directed; avoid overuse near drains.",
-                 sdsURL: nil),
-
-        Chemical(name: "Sodium Metasilicate",
-                 shortDescription: "Alkaline builder used in industrial cleaners.",
-                 uses: "Boosts detergency, emulsifies oils and greases.",
-                 precautions: "Corrosive; can cause skin/eye burns. Use gloves and eye protection.",
-                 mixingNote: "Dissolve per label; avoid incompatible mixes.",
-                 sdsURL: nil),
-
-        Chemical(name: "Nonionic Surfactants (APG, alcohol ethoxylates)",
-                 shortDescription: "Wetting agents and detergents used across many formulations.",
-                 uses: "General-purpose cleaners; degreasers; reduce surface tension for better penetration.",
-                 precautions: "Mild to moderate irritant; choose biodegradable types where possible.",
-                 mixingNote: "Typically added at low concentrations per formulation guidance.",
-                 sdsURL: nil),
-
-        Chemical(name: "Anionic Surfactants (LAS, SLS, SLES)",
-                 shortDescription: "Detergents for removing soils, helpful for heavy foaming systems.",
-                 uses: "Concrete, siding, and equipment cleaners; foaming detergents.",
-                 precautions: "Irritant at high concentrations; incompatible with cationic biocides.",
-                 mixingNote: "Combine with amphoterics to reduce irritation and control foam.",
-                 sdsURL: nil),
-
-        Chemical(name: "Amphoteric Surfactants (Cocamidopropyl Betaine)",
-                 shortDescription: "Surfactants that moderate foam and reduce irritation in blends.",
-                 uses: "Foam boosters, mild cleansers, vehicle and surface cleaners.",
-                 precautions: "Possible allergen for sensitive users; use PPE for concentrate handling.",
-                 mixingNote: "Good compatibility with anionics and nonionics.",
-                 sdsURL: nil),
-
-        Chemical(name: "Quaternary Ammonium Compounds (Quats)",
-                 shortDescription: "Cationic biocides used for sanitizing and algaecide applications.",
-                 uses: "Surface disinfectants, sanitizer formulations, some algaecidal blends.",
-                 precautions: "Irritating to skin/eyes; toxic to aquatic life; do not mix with anionic detergents or bleach.",
-                 mixingNote: "Follow label contact times for disinfection efficacy.",
-                 sdsURL: nil),
-
-        Chemical(name: "Sodium Percarbonate (Oxygen Bleach)",
-                 shortDescription: "Oxygen-based powdered bleach used as a chlorine-free bleaching agent.",
-                 uses: "Deck/siding brightening, mildew removal where chlorine is undesirable.",
-                 precautions: "Oxidizer; inspect for dust inhalation risk and use PPE.",
-                 mixingNote: "Dissolve per manufacturer's guidance; active at elevated temperatures.",
-                 sdsURL: nil),
-
-        Chemical(name: "Hydrogen Peroxide (stabilized)",
-                 shortDescription: "Liquid oxidizer used in some non-chlorine disinfectant systems.",
-                 uses: "Stain removal and sanitizing as chlorine alternative.",
-                 precautions: "Oxidizer and irritant at higher concentrations; store cool and away from organics.",
-                 mixingNote: "Avoid mixing with metals and reducing agents.",
-                 sdsURL: nil),
-
-        Chemical(name: "Sodium Dichloroisocyanurate (NaDCC)",
-                 shortDescription: "Solid chlorinated disinfectant for controlled chlorine dosing.",
-                 uses: "Granular/tablet chlorination and disinfection uses.",
-                 precautions: "Oxidizer; avoid mixing with acids or organics; PPE required.",
-                 mixingNote: "Store dry and handle per label instructions.",
-                 sdsURL: nil),
-
-        Chemical(name: "Phosphoric Acid",
-                 shortDescription: "Acid used for rust, mineral, and scale removal.",
-                 uses: "Rust stain removal and concrete cleaning (controlled).",
-                 precautions: "Corrosive; use acid PPE and containment.",
-                 mixingNote: "Neutralize and rinse after use; do not mix with oxidizers/bleach.",
-                 sdsURL: nil),
-
-        Chemical(name: "Oxalic Acid",
-                 shortDescription: "Organic acid effective against rust and tannin stains.",
-                 uses: "Rust stain treatment on masonry and wood brightening.",
-                 precautions: "Toxic if ingested; irritant to skin/eyes; use PPE.",
-                 mixingNote: "Use in formulated dilutions and rinse thoroughly.",
-                 sdsURL: nil),
-
-        Chemical(name: "Sulfamic Acid",
-                 shortDescription: "Solid acid descaler used as a milder alternative to HCl.",
-                 uses: "Descaling and rust stain removal where milder acid is preferred.",
-                 precautions: "Irritant/corrosive; avoid dust and use PPE.",
-                 mixingNote: "Dissolve per manufacturer guidance; do not mix with bleach.",
-                 sdsURL: nil),
-
-        Chemical(name: "Citric Acid",
-                 shortDescription: "Mild, biodegradable organic acid for descaling and pH adjustment.",
-                 uses: "Light descaling, rust/tannin stain removal, eco-friendlier formulations.",
-                 precautions: "Irritant at high concentration; handle powders carefully.",
-                 mixingNote: "Good alternative to stronger mineral acids for sensitive surfaces.",
-                 sdsURL: nil)
-    ]
+        // Fallback built-in list (minimal examples with brand hints)
+        return [
+            Chemical(externalID: "chem-001", name: "Sodium Hypochlorite (Bleach)", shortDescription: "Chlorine-based oxidizing bleach used for whitening and disinfection.", uses: "Mildew/mold removal, sanitizing siding, decks, concrete; organic stain removal.", precautions: "Corrosive to skin/eyes; produces toxic gases if mixed with acids or ammonia; wear gloves, goggles, and respirator for fumes; control runoff.", mixingNote: "Typically diluted for surface cleaning; follow product label for concentration.", sdsURL: nil, brands: ["Clorox", "Private Label Bleach"]),
+            Chemical(externalID: "chem-002", name: "Sodium Percarbonate (Oxygen Bleach)", shortDescription: "Oxygen-based powdered bleach that releases hydrogen peroxide.", uses: "Brightening wood and concrete; gentler mold/algae removal alternative to chlorine.", precautions: "Oxidizer; eye/skin irritant; keep dry in storage; use gloves and goggles.", mixingNote: "Dissolve per manufacturer's instructions; active at warm temperatures.", sdsURL: nil, brands: ["OxiClean", "Private Label Oxygen Bleach"])        ]
+    }
 }
