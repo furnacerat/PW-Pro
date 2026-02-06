@@ -1,0 +1,13 @@
+# Agentic folders
+.tmp/
+.DS_Store
+
+# Swift/Xcode
+.build/
+.swiftpm/
+Packages/
+*.xcodeproj/
+*.xcworkspace/
+
+# AI Agent
+.agent/

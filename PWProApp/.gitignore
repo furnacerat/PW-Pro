@@ -1,0 +1,5 @@
+# Config.plist
+Config.plist
+Pods/
+*.xcworkspace
+.DS_Store
