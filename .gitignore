@@ -1,29 +1,17 @@
-<<<<<<< HEAD
 # Agentic folders
 .tmp/
+.agent/
 .DS_Store
 
 # Swift/Xcode
-.build/
-.swiftpm/
-Packages/
-*.xcodeproj/
-*.xcworkspace/
-
-# AI Agent
-.agent/
-=======
-.DS_Store
 .build/
 build/
 DerivedData/
 xcuserdata/
 *.xcworkspace
 *.xcuserstate
-
-# Swift Package Manager
-.build/
 Packages/
+*.xcodeproj/
 
 # CocoaPods
 Pods/
@@ -41,4 +29,4 @@ fastlane/
 # Environment files
 .env
 .env.local
->>>>>>> 3ac4634336cf40507eb9140ac7caf093c5222250
+.swiftpm/
