@@ -1,9 +1,15 @@
+# =============================================================================
+# PW PRO GITIGNORE - SECURITY FIRST CONFIGURATION
+# =============================================================================
+
 # Agentic folders
-.tmp/
 .agent/
+.tmp/
 .DS_Store
 
-# Swift/Xcode
+# =============================================================================
+# SWIFT/XCODE BUILD ARTIFACTS
+# =============================================================================
 .build/
 build/
 DerivedData/
@@ -12,6 +18,9 @@ xcuserdata/
 *.xcuserstate
 Packages/
 *.xcodeproj/
+*.hmap
+*.ipa
+*.dSYM
 
 # CocoaPods
 Pods/
@@ -21,12 +30,231 @@ Carthage/
 
 # Fastlane
 fastlane/
+fastlane_report.xml
 
-# macOS swap/temp
-*.swp
-*~
+# =============================================================================
+# SWIFT PACKAGE MANAGER
+# =============================================================================
+.swiftpm/
+.resolved/
+.build/
 
+# =============================================================================
+# ENVIRONMENT & CONFIGURATION FILES (NEVER COMMIT SECRETS)
+# =============================================================================
 # Environment files
 .env
 .env.local
-.swiftpm/
+.env.development
+.env.staging
+.env.production
+.env.*.local
+
+# Configuration files with secrets
+Config*.plist
+config.plist
+configuration.plist
+secrets.plist
+api-keys.plist
+
+# =============================================================================
+# LOGS & TEMPORARY FILES
+# =============================================================================
+*.log
+*.tmp
+*~
+*.swp
+*.swo
+.temp/
+logs/
+temp/
+tmp/
+
+# =============================================================================
+# BACKUPS & EXPORTS
+# =============================================================================
+*.backup
+*.bak
+*.old
+backups/
+exports/
+*.sql.gz
+*.dump
+
+# =============================================================================
+# SECURITY & ENCRYPTION FILES
+# =============================================================================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+certificates/
+keys/
+
+# =============================================================================
+# TEST DATA & USER DATA
+# =============================================================================
+test-data/
+sample-data/
+user-data/
+*.sqlite
+*.db
+*.realm
+
+# =============================================================================
+# IDE & EDITOR FILES
+# =============================================================================
+.vscode/
+.idea/
+*.sublime-*
+.atom/
+.fleet/
+.history/
+
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# =============================================================================
+# BUILD TOOLS & CI/CD
+# =============================================================================
+.github/
+.circleci/
+.bitbucket/
+.gitlab-ci.yml
+Jenkinsfile
+
+# =============================================================================
+# ANALYTICS & MONITORING
+# =============================================================================
+google-services.json
+GoogleService-Info.plist
+sentry.properties
+fabric.properties
+
+# =============================================================================
+# DOCUMENTATION & DOCS (IF CONFIDENTIAL)
+# =============================================================================
+docs/confidential/
+docs/secrets/
+*.md.tmp
+
+# =============================================================================
+# ARCHIVES & DISTRIBUTION
+# =============================================================================
+*.xcarchive
+Distribution/
+Release/
+Release-*/
+ipa/
+
+# =============================================================================
+# SPECIFIC TO PW PRO
+# =============================================================================
+# Supabase configuration files
+supabase/config.toml
+.supabase/
+
+# RevenueCat configuration
+revenuecat.json
+
+# Gemini API key files
+gemini-*.json
+
+# Weather API configuration
+weather-config.json
+
+# Test user data
+test-users/
+test-clients/
+mock-data/
+
+# =============================================================================
+# ALLOWLIST (EXCEPTIONS)
+# =============================================================================
+# You may want to track some configuration files
+# !Config.example.plist
+# !Config.template.plist
+# !README.md
+# !package.json
+
+# =============================================================================
+# CUSTOM PATTERNS FOR ADDED SECURITY
+# =============================================================================
+# Any file containing sensitive patterns
+*api-key*
+*secret*
+*password*
+*token*
+*credential*
+
+# Any file with production data
+*production*
+*prod*
+live*
+
+# =============================================================================
+# COMPREHENSIVE PATTERN MATCHING
+# =============================================================================
+# Block files containing API keys, tokens, or secrets
+**/*api-key*
+**/*secret*
+**/*password*
+**/*token*
+**/*credential*
+
+# Block common secret file patterns
+**/secrets/
+**/.secrets/
+**/private/
+**/.private/
+**/confidential/
+**/.confidential/
+
+# Block environment files in any subdirectory
+**/.env*
+**/env.*
+**/.env.*
+
+# =============================================================================
+# SECURITY NOTES
+# =============================================================================
+# This .gitignore file is designed for maximum security:
+#
+# 1. ALL environment and secret files are blocked
+# 2. Build artifacts and temporary files are blocked
+# 3. IDE and editor specific files are blocked
+# 4. Operating system files are blocked
+# 5. Backup and archive files are blocked
+# 6. Any file patterns matching secret keywords are blocked
+#
+# IMPORTANT: If you need to track a configuration file,
+# use the ALLOWLIST section at the bottom and add explicit exceptions.
+#
+# BEFORE OVERRIDING ANY OF THESE RULES:
+# 1. Consult with security team
+# 2. Ensure no secrets are included
+# 3. Consider using encrypted files instead
+# 4. Document the reason for exception
+
+# =============================================================================
+# REVIEW & MAINTENANCE
+# =============================================================================
+# This file should be reviewed quarterly for:
+# - New file patterns that might contain secrets
+# - Changes in build tools requiring new exclusions
+# - Project-specific files that need protection
+# - Compliance with industry best practices
+
+# Last Updated: December 14, 2024
+# Next Review: March 14, 2025
+# Security Contact: [your-security-team@company.com]
