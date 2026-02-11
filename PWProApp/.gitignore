@@ -3,3 +3,4 @@ Config.plist
 Pods/
 *.xcworkspace
 .DS_Store
+.env

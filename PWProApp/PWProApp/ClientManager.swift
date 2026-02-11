@@ -9,6 +9,7 @@ class ClientManager: ObservableObject {
     
     static let shared = ClientManager()
     private let clientService: ClientService
+    private let supabase = SupabaseManager.shared
     
     private init() {
         self.clientService = ClientService(client: SupabaseManager.shared.client)

@@ -68,8 +68,8 @@ class ConfigurationService {
     
     private func migrationCheck() {
         // Trigger lazy loading of critical keys to ensure they migrate immediately on startup
-        _ = try? get(key: Keys.supabaseURL) // triggers get logic
-        _ = try? get(key: Keys.supabaseAnonKey)
-        _ = try? get(key: Keys.geminiAPIKey)
+        _ = get(key: Keys.supabaseURL) // triggers get logic
+        _ = get(key: Keys.supabaseAnonKey)
+        _ = get(key: Keys.geminiAPIKey)
     }
 }

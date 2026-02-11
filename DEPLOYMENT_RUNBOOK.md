@@ -58,14 +58,23 @@ BUNDLE_ID=com.yourcompany.pwpro
 API_BASE_URL=https://api.pwpro.com
 ```
 
-### 3. Database Setup
-```bash
-# Deploy complete schema to production
-supabase db push --db-url $SUPABASE_DB
+### 3. Database Setup (Standard Plan Compatible)
+The "Git Push to Deploy" is a Pro feature. For Standard/Free plans, use the CLI:
 
-# Or via SQL Editor:
-# 1. Copy contents of: supabase_complete_schema.sql
-# 2. Run in Supabase Dashboard → SQL Editor
+```bash
+# 1. Login to Supabase CLI
+supabase login
+
+# 2. Link your local project to the remote instance
+# Get your Reference ID from the dashboard URL: https://app.supabase.com/project/<REFERENCE_ID>
+supabase link --project-ref lkmazqixrlofyhlrmfuq
+
+# 3. Push your local schema migrations to the remote database
+# This applies all SQL files in supabase/migrations/ to the live DB
+supabase db push
+
+# 4. (Optional) Run the complete schema script if starting fresh
+# psql -h db.lkmazqixrlofyhlrmfuq.supabase.co -U postgres -d postgres -f supabase_complete_schema.sql
 ```
 
 ### 4. Build & Test Commands
