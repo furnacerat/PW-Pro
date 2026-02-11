@@ -6,14 +6,16 @@ enum FieldToolTab: Int, CaseIterable {
     case calculator = 0
     case chemicals = 1
     case checklist = 2
-    case arMeasure = 3
-    case beforeAfter = 4
+    case damageDocs = 3
+    case arMeasure = 4
+    case beforeAfter = 5
     
     var title: String {
         switch self {
         case .calculator: return "Calculator"
         case .chemicals: return "Chemicals"
         case .checklist: return "Checklist"
+        case .damageDocs: return "Damage Docs"
         case .arMeasure: return "AR Measure"
         case .beforeAfter: return "Before/After"
         }
@@ -24,6 +26,7 @@ enum FieldToolTab: Int, CaseIterable {
         case .calculator: return "function"
         case .chemicals: return "flask.fill"
         case .checklist: return "checklist"
+        case .damageDocs: return "exclamationmark.shield.fill"
         case .arMeasure: return "camera.viewfinder"
         case .beforeAfter: return "photo.on.rectangle.angled"
         }
@@ -87,6 +90,8 @@ struct FieldToolsView: View {
                         ChemicalsView()
                     case .checklist:
                         JobChecklistView()
+                    case .damageDocs:
+                        DamageDocumentationView()
                     case .arMeasure:
                         SmartCameraView(estimatedSqFt: $dummyArea, identifiedSurface: $dummySurface)
                     case .beforeAfter:
