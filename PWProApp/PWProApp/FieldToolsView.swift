@@ -1,10 +1,40 @@
 import SwiftUI
 
+// MARK: - Field Tools Tab Definition
+
+enum FieldToolTab: Int, CaseIterable {
+    case calculator = 0
+    case chemicals = 1
+    case checklist = 2
+    case arMeasure = 3
+    case beforeAfter = 4
+    
+    var title: String {
+        switch self {
+        case .calculator: return "Calculator"
+        case .chemicals: return "Chemicals"
+        case .checklist: return "Checklist"
+        case .arMeasure: return "AR Measure"
+        case .beforeAfter: return "Before/After"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .calculator: return "function"
+        case .chemicals: return "flask.fill"
+        case .checklist: return "checklist"
+        case .arMeasure: return "camera.viewfinder"
+        case .beforeAfter: return "photo.on.rectangle.angled"
+        }
+    }
+}
+
 struct FieldToolsView: View {
-    @State private var selectedTab: Int
+    @State private var selectedTab: FieldToolTab
     
     init(selectedTab: Int = 0) {
-        _selectedTab = State(initialValue: selectedTab)
+        _selectedTab = State(initialValue: FieldToolTab(rawValue: selectedTab) ?? .calculator)
     }
     
     var body: some View {
@@ -13,28 +43,53 @@ struct FieldToolsView: View {
                 Theme.slate900.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Custom Segmented Control
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 0) {
-                            TabButton(title: "Calculator", isSelected: selectedTab == 0) { selectedTab = 0 }
-                            TabButton(title: "Chemicals", isSelected: selectedTab == 1) { selectedTab = 1 }
-                            TabButton(title: "Checklist", isSelected: selectedTab == 2) { selectedTab = 2 }
-                            TabButton(title: "AR Measure", isSelected: selectedTab == 3) { selectedTab = 3 }
-                            TabButton(title: "Before/After", isSelected: selectedTab == 4) { selectedTab = 4 }
+                    // Premium scrollable tab bar
+                    ScrollViewReader { proxy in
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(FieldToolTab.allCases, id: \.rawValue) { tab in
+                                    FieldToolTabButton(
+                                        tab: tab,
+                                        isSelected: selectedTab == tab
+                                    ) {
+                                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                            selectedTab = tab
+                                        }
+                                        HapticManager.selection()
+                                    }
+                                    .id(tab.rawValue)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
+                        .background(
+                            Theme.slate800.opacity(0.6)
+                                .overlay(
+                                    Rectangle()
+                                        .frame(height: 0.5)
+                                        .foregroundColor(Theme.slate700.opacity(0.5)),
+                                    alignment: .bottom
+                                )
+                        )
+                        .onChange(of: selectedTab) { _, newTab in
+                            withAnimation {
+                                proxy.scrollTo(newTab.rawValue, anchor: .center)
+                            }
                         }
                     }
-                    .padding()
-                    .background(Theme.slate800.opacity(0.5))
                     
-                    if selectedTab == 0 {
+                    // Content
+                    switch selectedTab {
+                    case .calculator:
                         MixingCalculatorView()
-                    } else if selectedTab == 1 {
+                    case .chemicals:
                         ChemicalsView()
-                    } else if selectedTab == 2 {
+                    case .checklist:
                         JobChecklistView()
-                    } else if selectedTab == 3 {
+                    case .arMeasure:
                         SmartCameraView(estimatedSqFt: $dummyArea, identifiedSurface: $dummySurface)
-                    } else {
+                    case .beforeAfter:
                         BeforeAfterCameraView()
                     }
                 }
@@ -48,6 +103,53 @@ struct FieldToolsView: View {
     @State private var dummySurface: SurfaceType = .sidingVinyl
 }
 
+// MARK: - Premium Tab Button
+
+struct FieldToolTabButton: View {
+    let tab: FieldToolTab
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 13, weight: .semibold))
+                
+                Text(tab.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                Group {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Theme.sky500.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Theme.sky500.opacity(0.3), lineWidth: 1)
+                            )
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Theme.slate800.opacity(0.4))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Theme.slate700.opacity(0.5), lineWidth: 0.5)
+                            )
+                    }
+                }
+            )
+            .foregroundColor(isSelected ? Theme.sky500 : Theme.slate400)
+            .scaleEffect(isSelected ? 1.0 : 0.97)
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+    }
+}
+
+// Legacy TabButton kept for any other usage
 struct TabButton: View {
     let title: String
     let isSelected: Bool
