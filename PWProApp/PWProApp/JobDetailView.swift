@@ -7,13 +7,14 @@ struct JobDetailView: View {
     
     @Binding var job: ScheduledJob
     
-    @State private var showingShareSheet = false
-    @State private var shareContent: String = ""
     @State private var showingDeleteConfirmation = false
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Deployment Section
+                JobDeploymentView(job: $job)
+                
                 // Status Section
                 GlassCard {
                     HStack {
@@ -157,6 +158,36 @@ struct JobDetailView: View {
                 
                 // Actions Section
                 VStack(spacing: 12) {
+                    // Arrive at Job button
+                    if job.status == .scheduled || job.status == .inProgress {
+                        let jobManager = ActiveJobManager.shared
+                        let isThisJobActive = jobManager.activeJob?.id == job.id
+                        
+                        if isThisJobActive {
+                            // Show active indicator
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(Theme.emerald500)
+                                    .frame(width: 8, height: 8)
+                                Text("Job In Progress")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(Theme.emerald500)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Theme.emerald500.opacity(0.1))
+                            .cornerRadius(12)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.emerald500.opacity(0.3), lineWidth: 1))
+                        } else {
+                            NeonButton(title: "Arrive at Job", color: Theme.emerald500, icon: "location.circle.fill") {
+                                ActiveJobManager.shared.startJob(job)
+                                // Post notification to switch to Field Tools tab
+                                NotificationCenter.default.post(name: .switchToFieldTools, object: nil)
+                                dismiss()
+                            }
+                        }
+                    }
+                    
                     NeonButton(title: "On My Way (SMS)", color: Theme.sky500, icon: "paperplane.fill") {
                         sendOnMyWaySMS()
                     }
@@ -196,9 +227,6 @@ struct JobDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         #if os(iOS)
-        .sheet(isPresented: $showingShareSheet) {
-            ShareSheet(activityItems: [shareContent])
-        }
         .alert("Delete Job?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
@@ -212,17 +240,7 @@ struct JobDetailView: View {
     }
     
     private func sendReviewRequestSMS() {
-        let businessName = BusinessSettings.shared.businessName
-        let link = BusinessSettings.shared.googleReviewLink
-        let message = "Hi \(job.clientName), thank you for choosing \(businessName)! We'd love to hear about your experience. Could you leave us a quick review here? \(link)"
-        
-        #if os(macOS)
-        let picker = NSSharingServicePicker(items: [message])
-        picker.show(relativeTo: .zero, of: NSApp.keyWindow?.contentView ?? NSView(), preferredEdge: .minY)
-        #else
-        shareContent = message
-        showingShareSheet = true
-        #endif
+        ReputationManager.shared.requestReview(clientName: job.clientName, platform: .google)
     }
     
     private func sendOnMyWaySMS() {
@@ -234,8 +252,11 @@ struct JobDetailView: View {
         let picker = NSSharingServicePicker(items: [message])
         picker.show(relativeTo: .zero, of: NSApp.keyWindow?.contentView ?? NSView(), preferredEdge: .minY)
         #else
-        shareContent = message
-        showingShareSheet = true
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootViewController = windowScene.windows.first?.rootViewController {
+            let activityVC = UIActivityViewController(activityItems: [message], applicationActivities: nil)
+            rootViewController.present(activityVC, animated: true)
+        }
         #endif
     }
     
@@ -277,6 +298,180 @@ struct DetailRow: View {
                     .foregroundColor(.white)
             }
             Spacer()
+        }
+    }
+}
+import SwiftUI
+
+struct JobDeploymentView: View {
+    @Binding var job: ScheduledJob
+    @StateObject private var userManager = UserManager.shared
+    @StateObject private var scheduler = SchedulingManager.shared
+    
+    @State private var showingUserPicker = false
+    
+    var currentUser: UserProfile? {
+        guard let id = userManager.currentUserId else { return nil }
+        return userManager.getUser(id: id)
+    }
+    
+    var isCurrentUserDeployed: Bool {
+        guard let id = userManager.currentUserId else { return false }
+        return job.deployedUserIds.contains(id)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("DEPLOYMENT")
+                .font(Theme.labelFont)
+                .foregroundColor(Theme.slate500)
+            
+            GlassCard {
+                VStack(spacing: 16) {
+                    // 1. Current User Action
+                    if let userId = userManager.currentUserId {
+                        if isCurrentUserDeployed {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("You are deployed")
+                                        .font(.headline)
+                                        .foregroundColor(Theme.emerald500)
+                                    Text("Complete the job or undeploy to switch.")
+                                        .font(.caption)
+                                        .foregroundColor(Theme.slate400)
+                                }
+                                Spacer()
+                                Button {
+                                    scheduler.undeployUser(userId, from: job)
+                                } label: {
+                                    Text("Undeploy")
+                                        .font(.caption.bold())
+                                        .foregroundColor(Theme.red500)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Theme.red500.opacity(0.1))
+                                        .cornerRadius(8)
+                                }
+                            }
+                        } else {
+                            Button {
+                                scheduler.deployUser(userId, to: job)
+                            } label: {
+                                HStack {
+                                    Image(systemName: "person.badge.plus")
+                                    Text("Deploy Myself")
+                                }
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Theme.sky500)
+                                .cornerRadius(12)
+                            }
+                        }
+                    }
+                    
+                    Divider().background(Theme.slate700)
+                    
+                    // 2. Team List
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Team on this job")
+                                .font(.caption.bold())
+                                .foregroundColor(Theme.slate400)
+                            Spacer()
+                            Button {
+                                showingUserPicker = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(Theme.sky500)
+                            }
+                        }
+                        
+                        if job.deployedUserIds.isEmpty {
+                            Text("No one deployed yet")
+                                .font(.caption)
+                                .italic()
+                                .foregroundColor(Theme.slate500)
+                        } else {
+                            ForEach(job.deployedUserIds, id: \.self) { userId in
+                                HStack {
+                                    Circle()
+                                        .fill(Theme.slate700)
+                                        .frame(width: 32, height: 32)
+                                        .overlay(
+                                            Text(String(userManager.getName(for: userId).prefix(1)))
+                                                .font(.caption.bold())
+                                                .foregroundColor(.white)
+                                        )
+                                    
+                                    Text(userManager.getName(for: userId))
+                                        .font(.body)
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    // Remove button (only if admin or valid permission, strictly simplistic for now)
+                                    Button {
+                                        scheduler.undeployUser(userId, from: job)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(Theme.slate600)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showingUserPicker) {
+            UserPickerView(job: job)
+                .presentationDetents([.medium])
+        }
+    }
+}
+
+struct UserPickerView: View {
+    @Environment(\.dismiss) var dismiss
+    let job: ScheduledJob
+    @StateObject private var userManager = UserManager.shared
+    @StateObject private var scheduler = SchedulingManager.shared
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(userManager.users) { user in
+                    if !job.deployedUserIds.contains(user.id) {
+                        Button {
+                            scheduler.deployUser(user.id, to: job)
+                            dismiss()
+                        } label: {
+                            HStack {
+                                Text(user.displayName)
+                                    .foregroundColor(.white)
+                                if let role = user.role {
+                                    Spacer()
+                                    Text(role)
+                                        .font(.caption)
+                                        .foregroundColor(Theme.slate400)
+                                }
+                            }
+                        }
+                        .listRowBackground(Theme.slate800)
+                    }
+                }
+            }
+            .background(Theme.slate900)
+            .scrollContentBackground(.hidden)
+            .navigationTitle("Deploy Team Member")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
         }
     }
 }

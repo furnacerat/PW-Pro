@@ -196,6 +196,19 @@ struct InvoiceDetailView: View {
                             showingBookingSheet = true
                         }
                     }
+                    
+                    NavigationLink(destination: ContractView(invoice: invoice)) {
+                        HStack {
+                            Image(systemName: "doc.text.fill")
+                            Text("View Contract / Print")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Theme.slate800)
+                        .cornerRadius(12)
+                    }
                 }
                 .padding(.top, 10)
             }

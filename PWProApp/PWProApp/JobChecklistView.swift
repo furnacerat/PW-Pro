@@ -60,6 +60,7 @@ struct JobChecklistView: View {
     @State private var items: [ChecklistItem] = Self.defaultItems
     @State private var showResetConfirmation = false
     @State private var expandedCategories: Set<String> = Set(ChecklistCategory.allCases.map(\.rawValue))
+    @StateObject private var jobManager = ActiveJobManager.shared
     
     private var completedCount: Int {
         items.filter(\.isCompleted).count
@@ -109,6 +110,18 @@ struct JobChecklistView: View {
         } message: {
             Text("This will uncheck all items and start fresh.")
         }
+        .onChange(of: items.map(\.isCompleted)) { _, _ in
+            syncToJobManager()
+        }
+    }
+    
+    private func syncToJobManager() {
+        guard jobManager.isActive else { return }
+        var state: [String: Bool] = [:]
+        for item in items {
+            state[item.title] = item.isCompleted
+        }
+        jobManager.checklistState = state
     }
     
     // MARK: - Progress Header

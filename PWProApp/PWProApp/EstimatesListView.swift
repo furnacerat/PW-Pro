@@ -7,6 +7,7 @@ struct EstimatesListView: View {
     @State private var showingStatusUpdate = false
     @State private var estimateToDelete: SavedEstimate?
     @State private var showingDeleteConfirmation = false
+    @State private var showingPrintView = false
     
     var body: some View {
         ScrollView {
@@ -31,11 +32,27 @@ struct EstimatesListView: View {
                     .padding(.top, 100)
                 } else {
                     ForEach(estimateManager.estimates.sorted(by: { $0.displayDate > $1.displayDate })) { savedEstimate in
-                        EstimateCard(estimate: savedEstimate) {
-                            selectedEstimate = savedEstimate
-                            showingStatusUpdate = true
+                        NavigationLink(destination: EstimateDetailView(estimate: savedEstimate)) {
+                            EstimateCard(estimate: savedEstimate) {
+                                // Empty closure as we are using NavigationLink
+                            }
                         }
+                        .buttonStyle(.plain) // Ensure text doesn't turn blue
                         .contextMenu {
+                            Button {
+                                selectedEstimate = savedEstimate
+                                showingStatusUpdate = true
+                            } label: {
+                                Label("Quick Update", systemImage: "pencil")
+                            }
+                            
+                            Button {
+                                selectedEstimate = savedEstimate
+                                showingPrintView = true
+                            } label: {
+                                Label("Print / View PDF", systemImage: "printer")
+                            }
+
                             Button(role: .destructive) {
                                 estimateToDelete = savedEstimate
                                 showingDeleteConfirmation = true
@@ -54,6 +71,18 @@ struct EstimatesListView: View {
         .sheet(isPresented: $showingStatusUpdate) {
             if let estimate = selectedEstimate {
                 EstimateStatusSheet(estimate: estimate)
+            }
+        }
+        .sheet(isPresented: $showingPrintView) {
+            if let estimate = selectedEstimate {
+                NavigationStack {
+                    EstimatePrintView(estimate: estimate)
+                        .toolbar {
+                             ToolbarItem(placement: .cancellationAction) {
+                                 Button("Close") { showingPrintView = false }
+                             }
+                        }
+                }
             }
         }
         .withErrorHandling(error: $estimateManager.error)
@@ -81,11 +110,10 @@ struct EstimatesListView: View {
 
 struct EstimateCard: View {
     let estimate: SavedEstimate
-    let onTap: () -> Void
+    var onTap: (() -> Void)? = nil
     
     var body: some View {
-        Button(action: onTap) {
-            GlassCard {
+        GlassCard {
                 VStack(alignment: .leading, spacing: 12) {
                     // Header
                     HStack {
@@ -165,7 +193,6 @@ struct EstimateCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -178,6 +205,7 @@ struct EstimateStatusSheet: View {
     @State private var customerNotes: String = ""
     @State private var selectedItems: Set<UUID>
     @State private var showingInvoiceSuccess = false
+    @State private var showingBookingSheet = false
     
     init(estimate: SavedEstimate) {
         self.estimate = estimate
@@ -308,6 +336,27 @@ struct EstimateStatusSheet: View {
                     // Action buttons
                     VStack(spacing: 12) {
                         if selectedStatus == .approved || selectedStatus == .partial {
+                            if estimate.status == .approved || estimate.status == .partial {
+                                // Already approved, offer scheduling
+                                Button {
+                                     // Trigger scheduling
+                                     showingBookingSheet = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "calendar")
+                                        Text("Schedule Job")
+                                            .fontWeight(.bold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Theme.sky500)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                    .shadow(color: Theme.sky500.opacity(0.3), radius: 10, y: 5)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            
                             Button {
                                 createInvoiceFromEstimate()
                             } label: {
@@ -362,6 +411,21 @@ struct EstimateStatusSheet: View {
                 }
             } message: {
                 Text("Invoice has been created successfully from this estimate.")
+            }
+            .sheet(isPresented: $showingBookingSheet) {
+                // Pass a temporary Invoice object created from the estimate info
+                JobBookingView(invoice: Invoice(
+                    id: UUID(), // Temporary ID, or fetch real one if linked
+                    estimateID: estimate.id,
+                    clientName: estimate.client.name,
+                    clientEmail: estimate.client.email,
+                    clientAddress: estimate.client.address,
+                    date: Date(),
+                    status: .draft,
+                    items: estimate.estimate.items,
+                    total: estimate.totalPrice,
+                    paymentLink: ""
+                ))
             }
         }
     }

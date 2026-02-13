@@ -4,7 +4,11 @@ struct JobBookingView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject var scheduler = SchedulingManager.shared
     
-    let invoice: Invoice
+    let invoice: Invoice?
+    
+    // Editable state (pre-filled if invoice exists)
+    @State private var clientName: String = ""
+    @State private var clientAddress: String = ""
     
     @State private var scheduledDate = Date()
     @State private var durationHours = 2.0
@@ -21,35 +25,65 @@ struct JobBookingView: View {
                         // Job Info Summary
                         GlassCard {
                             VStack(alignment: .leading, spacing: 12) {
-                                HStack {
+                                if let inv = invoice {
+                                    // Read-only view (Invoice based)
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("CLIENT")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundColor(Theme.slate500)
+                                            Text(inv.clientName)
+                                                .font(.headline)
+                                                .foregroundColor(.white)
+                                        }
+                                        Spacer()
+                                        VStack(alignment: .trailing, spacing: 4) {
+                                            Text("INVOICE")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundColor(Theme.slate500)
+                                            Text(inv.invoiceNumber)
+                                                .font(.caption.bold())
+                                                .foregroundColor(Theme.sky500)
+                                        }
+                                    }
+                                    
+                                    Divider().background(Theme.slate700)
+                                    
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text("CLIENT")
+                                        Text("ADDRESS")
                                             .font(.system(size: 10, weight: .bold))
                                             .foregroundColor(Theme.slate500)
-                                        Text(invoice.clientName)
-                                            .font(.headline)
-                                            .foregroundColor(.white)
+                                        Text(inv.clientAddress)
+                                            .font(.caption)
+                                            .foregroundColor(Theme.slate300)
                                     }
-                                    Spacer()
-                                    VStack(alignment: .trailing, spacing: 4) {
-                                        Text("INVOICE")
-                                            .font(.system(size: 10, weight: .bold))
-                                            .foregroundColor(Theme.slate500)
-                                        Text(invoice.invoiceNumber)
-                                            .font(.caption.bold())
-                                            .foregroundColor(Theme.sky500)
+                                } else {
+                                    // Editable view (Manual entry)
+                                    VStack(alignment: .leading, spacing: 16) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("CLIENT NAME")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundColor(Theme.slate500)
+                                            TextField("Enter client name", text: $clientName)
+                                                .textFieldStyle(PlainTextFieldStyle())
+                                                .padding(8)
+                                                .background(Theme.slate800)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("ADDRESS")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundColor(Theme.slate500)
+                                            TextField("Enter property address", text: $clientAddress)
+                                                .textFieldStyle(PlainTextFieldStyle())
+                                                .padding(8)
+                                                .background(Theme.slate800)
+                                                .cornerRadius(8)
+                                                .foregroundColor(.white)
+                                        }
                                     }
-                                }
-                                
-                                Divider().background(Theme.slate700)
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("ADDRESS")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(Theme.slate500)
-                                    Text(invoice.clientAddress)
-                                        .font(.caption)
-                                        .foregroundColor(Theme.slate300)
                                 }
                             }
                             .padding()
@@ -131,9 +165,9 @@ struct JobBookingView: View {
     
     private func saveBooking() {
         var job = ScheduledJob(
-            invoiceID: invoice.id,
-            clientName: invoice.clientName,
-            clientAddress: invoice.clientAddress,
+            invoiceID: invoice?.id,
+            clientName: clientName,
+            clientAddress: clientAddress,
             scheduledDate: scheduledDate
         )
         job.durationHours = durationHours
@@ -141,6 +175,14 @@ struct JobBookingView: View {
         
         scheduler.jobs.append(job)
         showingConfirmation = true
+    }
+}
+extension JobBookingView {
+    func loadData() {
+        if let inv = invoice {
+            self.clientName = inv.clientName
+            self.clientAddress = inv.clientAddress
+        }
     }
 }
 

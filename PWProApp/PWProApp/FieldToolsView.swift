@@ -35,6 +35,13 @@ enum FieldToolTab: Int, CaseIterable {
 
 struct FieldToolsView: View {
     @State private var selectedTab: FieldToolTab
+    @StateObject private var jobManager = ActiveJobManager.shared
+    @StateObject private var scheduler = SchedulingManager.shared
+    @State private var showStartJobSheet = false
+    @State private var showCompleteJobSheet = false
+    @State private var completedPackage: JobPackage?
+    @State private var elapsedTimer: Timer?
+    @State private var elapsedDisplay = "0:00"
     
     init(selectedTab: Int = 0) {
         _selectedTab = State(initialValue: FieldToolTab(rawValue: selectedTab) ?? .calculator)
@@ -46,6 +53,13 @@ struct FieldToolsView: View {
                 Theme.slate900.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    // Active Job Banner or Start Job Prompt
+                    if jobManager.isActive {
+                        activeJobBanner
+                    } else {
+                        startJobPrompt
+                    }
+                    
                     // Premium scrollable tab bar
                     ScrollViewReader { proxy in
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -95,17 +109,595 @@ struct FieldToolsView: View {
                     case .arMeasure:
                         SmartCameraView(estimatedSqFt: $dummyArea, identifiedSurface: $dummySurface)
                     case .beforeAfter:
-                        BeforeAfterCameraView()
+                        ShowcaseView()
+                    }
+                }
+                
+                // Floating Complete Job Button
+                if jobManager.isActive {
+                    VStack {
+                        Spacer()
+                        Button(action: { showCompleteJobSheet = true }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.seal.fill")
+                                Text("Complete Job")
+                            }
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 14)
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Theme.emerald500, Theme.emerald500.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .shadow(color: Theme.emerald500.opacity(0.4), radius: 16, y: 6)
+                            )
+                        }
+                        .padding(.bottom, 20)
                     }
                 }
             }
             .navigationTitle("Field Tools")
+            .sheet(isPresented: $showStartJobSheet) {
+                StartJobSheet(scheduler: scheduler, jobManager: jobManager)
+            }
+            .sheet(isPresented: $showCompleteJobSheet) {
+                CompleteJobSheet(jobManager: jobManager, completedPackage: $completedPackage)
+            }
+            .onAppear { startTimer() }
+            .onDisappear { stopTimer() }
+            .alert("Job Complete!", isPresented: $jobManager.showReviewPrompt) {
+                Button("Send Review Request") {
+                    if let package = completedPackage {
+                        ReputationManager.shared.requestReview(clientName: package.clientName, platform: .google)
+                    }
+                }
+                Button("Later", role: .cancel) { }
+            } message: {
+                Text("Would you like to send a review request to the client now?")
+            }
         }
+    }
+    
+    // MARK: - Active Job Banner
+    
+    private var activeJobBanner: some View {
+        HStack(spacing: 12) {
+            // Pulsing indicator
+            Circle()
+                .fill(Theme.emerald500)
+                .frame(width: 10, height: 10)
+                .shadow(color: Theme.emerald500, radius: 4)
+                .overlay(
+                    Circle()
+                        .stroke(Theme.emerald500.opacity(0.3), lineWidth: 2)
+                        .scaleEffect(1.5)
+                )
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(jobManager.jobDisplayName)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Text(jobManager.jobDisplayAddress)
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.slate400)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            // Live timer
+            HStack(spacing: 4) {
+                Image(systemName: "timer")
+                    .font(.system(size: 11))
+                Text(elapsedDisplay)
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+            }
+            .foregroundColor(Theme.emerald500)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Theme.emerald500.opacity(0.1))
+            .cornerRadius(8)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Theme.slate800.opacity(0.8)
+                .overlay(
+                    Rectangle()
+                        .frame(height: 2)
+                        .foregroundColor(Theme.emerald500.opacity(0.3)),
+                    alignment: .bottom
+                )
+        )
+    }
+    
+    // MARK: - Start Job Prompt
+    
+    private var startJobPrompt: some View {
+        Button(action: { showStartJobSheet = true }) {
+            HStack(spacing: 10) {
+                Image(systemName: "location.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Theme.sky500)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Arrive at Job")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    let todayJobs = scheduler.jobs(for: Date()).filter { $0.status == .scheduled }
+                    Text(todayJobs.isEmpty ? "Start a job to link all tools" : "\(todayJobs.count) job\(todayJobs.count == 1 ? "" : "s") scheduled today")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.slate400)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Theme.slate500)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                Theme.slate800.opacity(0.6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Theme.sky500.opacity(0.15), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - Timer
+    
+    private func startTimer() {
+        elapsedTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            Task { @MainActor in
+                elapsedDisplay = jobManager.formattedElapsedTime
+            }
+        }
+    }
+    
+    private func stopTimer() {
+        elapsedTimer?.invalidate()
+        elapsedTimer = nil
     }
     
     // Temporary state for the camera tool when used in standalone mode
     @State private var dummyArea: Double = 0
     @State private var dummySurface: SurfaceType = .sidingVinyl
+}
+
+// MARK: - Start Job Sheet
+
+struct StartJobSheet: View {
+    @ObservedObject var scheduler: SchedulingManager
+    @ObservedObject var jobManager: ActiveJobManager
+    @Environment(\.dismiss) private var dismiss
+    
+    var todayJobs: [ScheduledJob] {
+        scheduler.jobs(for: Date()).filter { $0.status == .scheduled }
+    }
+    
+    var upcomingJobs: [ScheduledJob] {
+        scheduler.jobs.filter {
+            $0.status == .scheduled && !Calendar.current.isDateInToday($0.scheduledDate)
+        }.sorted { $0.scheduledDate < $1.scheduledDate }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.slate900.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Hero
+                        VStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Theme.sky500.opacity(0.1))
+                                    .frame(width: 80, height: 80)
+                                Image(systemName: "location.circle.fill")
+                                    .font(.system(size: 36))
+                                    .foregroundColor(Theme.sky500)
+                            }
+                            Text("Select a Job to Start")
+                                .font(Theme.headingFont)
+                                .foregroundColor(.white)
+                            Text("All field tools will auto-link to this job")
+                                .font(.system(size: 13))
+                                .foregroundColor(Theme.slate400)
+                        }
+                        .padding(.top, 8)
+                        
+                        // Today's Jobs
+                        if !todayJobs.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "calendar")
+                                        .foregroundColor(Theme.emerald500)
+                                    Text("TODAY'S JOBS")
+                                        .font(Theme.labelFont)
+                                        .foregroundColor(Theme.slate400)
+                                }
+                                .padding(.horizontal, 16)
+                                
+                                ForEach(todayJobs) { job in
+                                    StartJobCard(job: job) {
+                                        jobManager.startJob(job)
+                                        dismiss()
+                                    }
+                                    .padding(.horizontal, 16)
+                                }
+                            }
+                        }
+                        
+                        // Upcoming Jobs
+                        if !upcomingJobs.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "clock")
+                                        .foregroundColor(Theme.amber500)
+                                    Text("UPCOMING")
+                                        .font(Theme.labelFont)
+                                        .foregroundColor(Theme.slate400)
+                                }
+                                .padding(.horizontal, 16)
+                                
+                                ForEach(upcomingJobs.prefix(5)) { job in
+                                    StartJobCard(job: job) {
+                                        jobManager.startJob(job)
+                                        dismiss()
+                                    }
+                                    .padding(.horizontal, 16)
+                                }
+                            }
+                        }
+                        
+                        // Empty state
+                        if todayJobs.isEmpty && upcomingJobs.isEmpty {
+                            GlassCard {
+                                VStack(spacing: 12) {
+                                    Image(systemName: "calendar.badge.exclamationmark")
+                                        .font(.system(size: 36))
+                                        .foregroundColor(Theme.slate500)
+                                    Text("No Scheduled Jobs")
+                                        .font(Theme.bodyFont)
+                                        .foregroundColor(Theme.slate400)
+                                    Text("Schedule jobs from the Calendar tab first, or create an estimate/invoice.")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Theme.slate500)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .padding()
+                            }
+                            .padding(.horizontal, 16)
+                        }
+                    }
+                    .padding(.bottom, 40)
+                }
+            }
+            .navigationTitle("Arrive at Job")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                        .foregroundColor(Theme.slate400)
+                }
+            }
+        }
+        .presentationDetents([.large])
+    }
+}
+
+// MARK: - Start Job Card
+
+struct StartJobCard: View {
+    let job: ScheduledJob
+    let onStart: () -> Void
+    
+    var body: some View {
+        Button(action: onStart) {
+            HStack(spacing: 14) {
+                // Status dot
+                Circle()
+                    .fill(job.status.color)
+                    .frame(width: 8, height: 8)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(job.clientName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Text(job.clientAddress)
+                        .font(.system(size: 12))
+                        .foregroundColor(Theme.slate400)
+                        .lineLimit(1)
+                    
+                    HStack(spacing: 8) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock")
+                                .font(.system(size: 9))
+                            Text(job.scheduledDate, format: .dateTime.hour().minute())
+                                .font(.system(size: 11, design: .monospaced))
+                        }
+                        .foregroundColor(Theme.slate500)
+                        
+                        HStack(spacing: 3) {
+                            Image(systemName: "timer")
+                                .font(.system(size: 9))
+                            Text("\(String(format: "%.1f", job.durationHours))h est.")
+                                .font(.system(size: 11, design: .monospaced))
+                        }
+                        .foregroundColor(Theme.slate500)
+                    }
+                }
+                
+                Spacer()
+                
+                // Start button
+                Text("START")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Theme.emerald500)
+                    .cornerRadius(8)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Theme.slate800.opacity(0.5))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Theme.slate700.opacity(0.5), lineWidth: 0.5)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Complete Job Sheet
+
+struct CompleteJobSheet: View {
+    @ObservedObject var jobManager: ActiveJobManager
+    @Binding var completedPackage: JobPackage?
+    @Environment(\.dismiss) private var dismiss
+    @State private var showConfirm = false
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Theme.slate900.ignoresSafeArea()
+                
+                if let package = completedPackage {
+                    // Completed Summary
+                    completedSummary(package)
+                } else {
+                    // Pre-complete review
+                    preCompleteReview
+                }
+            }
+            .navigationTitle(completedPackage != nil ? "Job Complete!" : "Complete Job")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(completedPackage != nil ? "Done" : "Cancel") {
+                        completedPackage = nil
+                        dismiss()
+                    }
+                    .foregroundColor(Theme.slate400)
+                }
+            }
+        }
+        .presentationDetents([.large])
+    }
+    
+    // MARK: - Pre-Complete Review
+    
+    private var preCompleteReview: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Hero
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Theme.emerald500.opacity(0.1))
+                            .frame(width: 80, height: 80)
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 36))
+                            .foregroundColor(Theme.emerald500)
+                    }
+                    Text("Ready to Complete?")
+                        .font(Theme.headingFont)
+                        .foregroundColor(.white)
+                    Text("This will package all data and close the job")
+                        .font(.system(size: 13))
+                        .foregroundColor(Theme.slate400)
+                }
+                .padding(.top, 8)
+                
+                // Job Summary
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("JOB SUMMARY")
+                            .font(Theme.labelFont)
+                            .foregroundColor(Theme.slate400)
+                        
+                        summaryRow(icon: "person.fill", label: "Client", value: jobManager.jobDisplayName)
+                        summaryRow(icon: "mappin", label: "Location", value: jobManager.jobDisplayAddress)
+                        summaryRow(icon: "timer", label: "Duration", value: jobManager.formattedElapsedTime)
+                    }
+                }
+                .padding(.horizontal, 16)
+                
+                // Collected Data
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("COLLECTED DATA")
+                            .font(Theme.labelFont)
+                            .foregroundColor(Theme.slate400)
+                        
+                        let checkDone = jobManager.checklistState.filter { $0.value }.count
+                        let checkTotal = jobManager.checklistState.count
+                        summaryRow(icon: "checklist", label: "Checklist",
+                                   value: checkTotal > 0 ? "\(checkDone)/\(checkTotal) items" : "Not started")
+                        
+                        summaryRow(icon: "exclamationmark.shield.fill", label: "Damage Reports",
+                                   value: "\(jobManager.damageRecords.count) report\(jobManager.damageRecords.count == 1 ? "" : "s")")
+                        
+                        summaryRow(icon: "photo.on.rectangle.angled", label: "Before/After",
+                                   value: jobManager.beforeImage != nil || jobManager.afterImage != nil ? "Captured" : "Not taken")
+                    }
+                }
+                .padding(.horizontal, 16)
+                
+                // Session Notes
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("SESSION NOTES (OPTIONAL)")
+                            .font(Theme.labelFont)
+                            .foregroundColor(Theme.slate400)
+                        
+                        TextEditor(text: $jobManager.sessionNotes)
+                            .font(Theme.bodyFont)
+                            .foregroundColor(.white)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 60)
+                            .padding(8)
+                            .background(Theme.slate800)
+                            .cornerRadius(8)
+                    }
+                }
+                .padding(.horizontal, 16)
+                
+                // Complete Button
+                Button {
+                    completedPackage = jobManager.completeJob()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "checkmark.seal.fill")
+                        Text("Complete & Package Job")
+                    }
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [Theme.emerald500, Theme.emerald500.opacity(0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .cornerRadius(14)
+                    .shadow(color: Theme.emerald500.opacity(0.3), radius: 12, y: 4)
+                }
+                .padding(.horizontal, 16)
+                
+                // Cancel session option
+                Button {
+                    jobManager.cancelSession()
+                    dismiss()
+                } label: {
+                    Text("Cancel Job Session")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Theme.red500)
+                }
+                .padding(.bottom, 40)
+            }
+        }
+    }
+    
+    // MARK: - Completed Summary
+    
+    private func completedSummary(_ package: JobPackage) -> some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                // Success hero
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Theme.emerald500.opacity(0.15))
+                            .frame(width: 100, height: 100)
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(Theme.emerald500)
+                    }
+                    Text("Job Completed!")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(package.formattedDate)
+                        .font(.system(size: 13))
+                        .foregroundColor(Theme.slate400)
+                }
+                .padding(.top, 8)
+                
+                // Package details
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("JOB RECORD")
+                            .font(Theme.labelFont)
+                            .foregroundColor(Theme.slate400)
+                        
+                        summaryRow(icon: "person.fill", label: "Client", value: package.clientName)
+                        summaryRow(icon: "mappin", label: "Location", value: package.clientAddress)
+                        summaryRow(icon: "clock", label: "Started", value: package.formattedStartTime)
+                        summaryRow(icon: "clock.badge.checkmark", label: "Completed", value: package.formattedCompletedTime)
+                        summaryRow(icon: "timer", label: "Duration", value: package.formattedDuration)
+                        summaryRow(icon: "checklist", label: "Checklist", value: "\(package.checklistCompleted.count)/\(package.checklistTotal)")
+                        summaryRow(icon: "camera.fill", label: "Damage Photos", value: "\(package.damagePhotoFileNames.count)")
+                    }
+                }
+                .padding(.horizontal, 16)
+                
+                // Done button
+                Button {
+                    completedPackage = nil
+                    dismiss()
+                } label: {
+                    Text("Done")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Theme.sky500)
+                        .cornerRadius(14)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 40)
+            }
+        }
+    }
+    
+    private func summaryRow(icon: String, label: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(Theme.sky500)
+                .frame(width: 20)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundColor(Theme.slate400)
+            Spacer()
+            Text(value)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+        }
+    }
 }
 
 // MARK: - Premium Tab Button

@@ -61,8 +61,8 @@ class EquipmentManager: ObservableObject {
                 )
             }
             
-            // If no equipment exists, add seed data
-            if equipment.isEmpty {
+            // If no equipment exists and user is logged in, add seed data
+            if equipment.isEmpty && supabase.currentUser != nil {
                 let mockEquipment = [
                     Equipment(name: "Honda GX390 Washer", type: "Pressure Washer", totalHours: 42.5, nextMaintenanceHours: 50.0, lastMaintenanceDate: Date().addingTimeInterval(-86400 * 30)),
                     Equipment(name: "Tucker Water Fed Pole", type: "Window Cleaning", totalHours: 120.0, nextMaintenanceHours: 200.0, lastMaintenanceDate: Date().addingTimeInterval(-86400 * 60)),

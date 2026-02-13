@@ -17,6 +17,13 @@ enum PaymentProvider: String, Codable, CaseIterable {
     }
 }
 
+struct BusinessDocument: Identifiable, Codable {
+    var id = UUID()
+    var title: String
+    var content: String
+    var isDefault: Bool = false
+}
+
 struct BusinessSettings: Codable {
     var businessName: String = "My Pressure Washing Co."
     var businessEmail: String = "pro@example.com"
@@ -27,6 +34,9 @@ struct BusinessSettings: Codable {
     var customTerms: String = "All work is performed to industry standards. Payment due upon completion."
     var logoData: Data? = nil
     var googleReviewLink: String = ""
+    var facebookReviewLink: String = ""
+    var reviewRequestTemplate: String = "Hi {ClientName}, thanks for choosing {BusinessName}! We'd love to hear about your experience. Could you take a moment to leave us a review? {Link}"
+    var documents: [BusinessDocument] = []
     
     static let shared = BusinessSettings()
 }

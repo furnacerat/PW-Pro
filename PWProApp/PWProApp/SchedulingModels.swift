@@ -11,6 +11,7 @@ struct ScheduledJob: Identifiable, Codable {
     var notes: String = ""
     var status: JobStatus = .scheduled
     var reviewSent: Bool = false
+    var deployedUserIds: [UUID] = []
     
     // Weather Intelligence (Mock)
     var surfaceType: SurfaceType = .sidingVinyl
@@ -26,6 +27,7 @@ struct ScheduledJob: Identifiable, Codable {
          notes: String = "", 
          status: JobStatus = .scheduled, 
          reviewSent: Bool = false,
+         deployedUserIds: [UUID] = [],
          surfaceType: SurfaceType = .sidingVinyl,
          windSpeed: Double = 5.0,
          rainChance: Double = 10.0) {
@@ -38,6 +40,7 @@ struct ScheduledJob: Identifiable, Codable {
         self.notes = notes
         self.status = status
         self.reviewSent = reviewSent
+        self.deployedUserIds = deployedUserIds
         self.surfaceType = surfaceType
         self.windSpeed = windSpeed
         self.rainChance = rainChance
@@ -93,6 +96,7 @@ class SchedulingManager: ObservableObject {
                     notes: jobData.notes ?? "",
                     status: ScheduledJob.JobStatus(rawValue: jobData.status) ?? .scheduled,
                     reviewSent: false,
+                    deployedUserIds: jobData.deployedUserIds ?? [],
                     surfaceType: SurfaceType(rawValue: jobData.serviceType) ?? .sidingVinyl,
                     windSpeed: Double.random(in: 5...15), // Mock weather for now
                     rainChance: Double.random(in: 0...30)
@@ -130,6 +134,7 @@ class SchedulingManager: ObservableObject {
             address: invoice.clientAddress,
             notes: "Scheduled via App",
             price: invoice.total,
+            deployedUserIds: [],
             createdAt: Date(),
             updatedAt: Date()
         )
@@ -141,7 +146,8 @@ class SchedulingManager: ObservableObject {
             clientName: invoice.clientName,
             clientAddress: invoice.clientAddress,
             scheduledDate: date,
-            status: status
+            status: status,
+            deployedUserIds: []
         )
         self.jobs.append(localJob)
         
@@ -172,5 +178,195 @@ class SchedulingManager: ObservableObject {
                 await fetchJobs()
             }
         }
+    }
+    
+    // MARK: - Deployment Logic
+    
+    func deployUser(_ userId: UUID, to job: ScheduledJob) {
+        Task {
+            // 1. Enforce "One active deployment per person"
+            // Remove this user from ANY other job they are currently deployed to
+            for (index, existingJob) in jobs.enumerated() {
+                if existingJob.id != job.id, existingJob.deployedUserIds.contains(userId) {
+                    // Remove user from this old job
+                    var updatedJob = existingJob
+                    updatedJob.deployedUserIds.removeAll { $0 == userId }
+                    jobs[index] = updatedJob // Optimistic update
+                    
+                    // Update backend for old job
+                    try? await updateJobDeployment(updatedJob)
+                }
+            }
+            
+            // 2. Add user to new job
+            guard let index = jobs.firstIndex(where: { $0.id == job.id }) else { return }
+            var updatedJob = jobs[index]
+            
+            // Avoid duplicates
+            if !updatedJob.deployedUserIds.contains(userId) {
+                updatedJob.deployedUserIds.append(userId)
+                jobs[index] = updatedJob // Optimistic update
+                
+                // 3. Update backend
+                do {
+                    try await updateJobDeployment(updatedJob)
+                    HapticManager.success()
+                } catch {
+                    print("Error deploying user: \(error)")
+                    self.error = "Failed to deploy user."
+                    await fetchJobs() // Revert on failure
+                }
+            }
+        }
+    }
+    
+    func undeployUser(_ userId: UUID, from job: ScheduledJob) {
+        Task {
+            guard let index = jobs.firstIndex(where: { $0.id == job.id }) else { return }
+            var updatedJob = jobs[index]
+            
+            if updatedJob.deployedUserIds.contains(userId) {
+                updatedJob.deployedUserIds.removeAll { $0 == userId }
+                jobs[index] = updatedJob // Optimistic update
+                
+                do {
+                    try await updateJobDeployment(updatedJob)
+                    HapticManager.selection()
+                } catch {
+                    print("Error undeploying user: \(error)")
+                    self.error = "Failed to undeploy user."
+                    await fetchJobs()
+                }
+            }
+        }
+    }
+    
+    private func updateJobDeployment(_ job: ScheduledJob) async throws {
+        let jobData = JobData(
+            id: job.id,
+            userId: nil, // Not changing owner
+            clientName: job.clientName,
+            serviceType: job.surfaceType.rawValue,
+            date: job.scheduledDate,
+            status: job.status.rawValue,
+            address: job.clientAddress,
+            notes: job.notes,
+            price: nil, // Preserve existing
+            deployedUserIds: job.deployedUserIds,
+            createdAt: nil,
+            updatedAt: Date()
+        )
+        try await jobService.updateJob(jobData)
+    }
+}
+import SwiftUI
+import Supabase
+
+struct UserProfile: Identifiable, Codable {
+    let id: UUID
+    let email: String
+    let fullName: String?
+    let role: String? // "Admin", "Technician"
+    
+    var displayName: String {
+        if let name = fullName, !name.isEmpty {
+            return name
+        }
+        return email.components(separatedBy: "@").first ?? "User"
+    }
+}
+
+@MainActor
+class UserManager: ObservableObject {
+    static let shared = UserManager()
+    private let supabase = SupabaseManager.shared.client
+    
+    @Published var users: [UserProfile] = []
+    @Published var isLoading = false
+    
+    // Cache for quick lookups
+    private var userCache: [UUID: UserProfile] = [:]
+    
+    // Current user
+    var currentUserId: UUID? {
+        SupabaseManager.shared.currentUser?.id
+    }
+    
+    init() {
+        Task {
+            await fetchUsers()
+        }
+    }
+    
+    func fetchUsers() async {
+        isLoading = true
+        do {
+            // Try to fetch from a 'profiles' table if it exists
+            // If not, we might need a different strategy (like edge functions or just using what we have)
+            // For now, we'll try to fetch from 'profiles'
+            
+            let profiles: [ProfileData] = try await supabase
+                .from("profiles")
+                .select()
+                .execute()
+                .value
+            
+            self.users = profiles.map { profile in
+                UserProfile(
+                    id: profile.id,
+                    email: profile.email ?? "", // Email might not be in public profile
+                    fullName: profile.fullName,
+                    role: profile.role
+                )
+            }
+            
+            // Build cache
+            for user in self.users {
+                userCache[user.id] = user
+            }
+            
+        } catch {
+            print("Error fetching profiles: \(error)")
+            // Fallback for demo/dev if table doesn't exist
+            if users.isEmpty {
+                createMockUsers()
+            }
+        }
+        isLoading = false
+    }
+    
+    func getUser(id: UUID) -> UserProfile? {
+        return userCache[id]
+    }
+    
+    func getName(for id: UUID) -> String {
+        return getUser(id: id)?.displayName ?? "Unknown User"
+    }
+    
+    private func createMockUsers() {
+        // Only for dev/fallback
+        guard let currentId = currentUserId else { return }
+        
+        let me = UserProfile(id: currentId, email: "me@pwpro.com", fullName: "You", role: "Admin")
+        let tech1 = UserProfile(id: UUID(), email: "alex@pwpro.com", fullName: "Alex Rivera", role: "Technician")
+        let tech2 = UserProfile(id: UUID(), email: "sarah@pwpro.com", fullName: "Sarah Chen", role: "Technician")
+        
+        self.users = [me, tech1, tech2]
+        self.userCache = Dictionary(uniqueKeysWithValues: users.map { ($0.id, $0) })
+    }
+}
+
+// Supabase Data Model
+struct ProfileData: Codable {
+    let id: UUID
+    let email: String?
+    let fullName: String?
+    let role: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case email
+        case fullName = "full_name"
+        case role
     }
 }

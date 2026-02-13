@@ -14,7 +14,7 @@ class JobService {
         let response: [JobData] = try await client
             .from("jobs")
             .select()
-            .order("date", ascending: false)
+            .order("scheduled_at", ascending: false)
             .execute()
             .value
         return response
@@ -57,6 +57,7 @@ struct JobData: Codable, Identifiable {
     var address: String?
     var notes: String?
     var price: Double?
+    var deployedUserIds: [UUID]?
     let createdAt: Date?
     let updatedAt: Date?
     
@@ -66,7 +67,9 @@ struct JobData: Codable, Identifiable {
         case clientId = "client_id"
         case clientName = "client_name"
         case serviceType = "service_type"
-        case date, status, address, notes, price
+        case date = "scheduled_at"
+        case status, address, notes, price
+        case deployedUserIds = "deployed_user_ids"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

@@ -436,6 +436,7 @@ struct NewDamageReportSheet: View {
     @State private var showCamera = false
     @State private var showPhotoLibrary = false
     @State private var selectedItems: [PhotosPickerItem] = []
+    @StateObject private var jobManager = ActiveJobManager.shared
     
     var body: some View {
         NavigationStack {
@@ -448,7 +449,11 @@ struct NewDamageReportSheet: View {
                         timestampCard
                         
                         // Job Reference
-                        jobReferenceCard
+                        if jobManager.isActive {
+                            autoLinkedJobCard
+                        } else {
+                            jobReferenceCard
+                        }
                         
                         // Photos
                         photosCard
@@ -583,7 +588,7 @@ struct NewDamageReportSheet: View {
                                 
                                 // Remove button
                                 Button {
-                                    withAnimation { capturedImages.remove(at: index) }
+                                    withAnimation { let _ = capturedImages.remove(at: index) }
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.system(size: 18))
@@ -729,13 +734,51 @@ struct NewDamageReportSheet: View {
         
         let record = DamageRecord(
             note: note,
-            jobReference: jobReference,
+            jobReference: jobManager.isActive ? "\(jobManager.jobDisplayName) — \(jobManager.jobDisplayAddress)" : jobReference,
             imageFileNames: fileNames
         )
         
-        store.add(record)
+        if jobManager.isActive {
+            jobManager.addDamageRecord(record)
+        } else {
+            store.add(record)
+        }
         HapticManager.success()
         dismiss()
+    }
+    
+    // MARK: - Auto-Linked Job Card
+    
+    private var autoLinkedJobCard: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "link.circle.fill")
+                        .foregroundColor(Theme.emerald500)
+                    Text("AUTO-LINKED TO ACTIVE JOB")
+                        .font(Theme.labelFont)
+                        .foregroundColor(Theme.emerald500)
+                }
+                
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Theme.emerald500)
+                        .frame(width: 6, height: 6)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(jobManager.jobDisplayName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                        Text(jobManager.jobDisplayAddress)
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.slate400)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.emerald500.opacity(0.08))
+                .cornerRadius(8)
+            }
+        }
     }
 }
 

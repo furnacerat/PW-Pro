@@ -1,5 +1,9 @@
 import SwiftUI
 
+extension Notification.Name {
+    static let switchToFieldTools = Notification.Name("switchToFieldTools")
+}
+
 struct ContentView: View {
     @StateObject private var authManager = AuthenticationManager()
     @StateObject private var onboardingManager = OnboardingManager.shared
@@ -89,6 +93,9 @@ struct ContentView: View {
                     showSplash = false
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .switchToFieldTools)) { _ in
+            withAnimation { selectedTab = 4 }
         }
     }
 }

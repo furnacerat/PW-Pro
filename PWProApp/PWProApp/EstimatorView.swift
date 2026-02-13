@@ -194,8 +194,14 @@ struct EstimateItem: Identifiable, Codable {
     var squareFootage: Double = 500
     var condition: SurfaceCondition = .average
     
+    // Added for persistence/printing
+    var description: String = ""
+    var quantity: Double = 1.0
+    var unitPrice: Double = 0.0
+    var totalPrice: Double = 0.0
+    
     var displayName: String {
-        surface == .custom ? customName : surface.rawValue
+        !description.isEmpty ? description : (surface == .custom ? customName : surface.rawValue)
     }
 }
 
@@ -497,10 +503,21 @@ struct EstimatorView: View {
         let business = BusinessSettings.shared.businessName
         let total = String(format: "$%.2f", totalPrice)
         
-        // Generate items list
-        let itemsList = estimate.items.map { item in
-            let itemTotal = calculateItemPrice(item)
-            return "• \(item.displayName) (\(Int(item.squareFootage)) sq ft): $\(String(format: "%.2f", itemTotal))"
+        // Update estimate items with calculated prices
+        var updatedEstimate = estimate
+        updatedEstimate.items = estimate.items.map { item in
+            var updatedItem = item
+            updatedItem.totalPrice = calculateItemPrice(item)
+            // Can calculate unit price too if needed
+            if item.squareFootage > 0 {
+                updatedItem.unitPrice = updatedItem.totalPrice / item.squareFootage
+            }
+            return updatedItem
+        }
+        
+        // Generate items list using the updated items
+        let itemsList = updatedEstimate.items.map { item in
+             "• \(item.displayName) (\(Int(item.squareFootage)) sq ft): $\(String(format: "%.2f", item.totalPrice))"
         }.joined(separator: "\n")
         
         let content: String
@@ -543,8 +560,8 @@ struct EstimatorView: View {
             """
         }
         
-        // Save estimate to manager
-        estimateManager.saveEstimate(estimate, for: client, totalPrice: totalPrice, status: .sent)
+        // Save using the updated estimate
+        estimateManager.saveEstimate(updatedEstimate, for: client, totalPrice: totalPrice, status: .sent)
         
         // Share the content
         #if os(macOS)

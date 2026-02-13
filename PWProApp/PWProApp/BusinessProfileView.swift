@@ -61,6 +61,27 @@ struct BusinessProfileView: View {
                         .font(.system(size: 14))
                 }
                 
+                // Legal & Documents
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 20) {
+                        Text("LEGAL & DOCUMENTS")
+                            .font(Theme.labelFont)
+                            .foregroundColor(Theme.slate500)
+                        
+                        NavigationLink(destination: BusinessDocumentsView()) {
+                            HStack {
+                                Image(systemName: "doc.text.fill")
+                                    .foregroundColor(Theme.sky500)
+                                Text("Manage Custom Documents / Contracts")
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Theme.slate600)
+                            }
+                        }
+                    }
+                }
+                
                 // Review Settings
                 GlassCard {
                     VStack(alignment: .leading, spacing: 20) {
@@ -68,7 +89,17 @@ struct BusinessProfileView: View {
                             .font(Theme.labelFont)
                             .foregroundColor(Theme.slate500)
                         
-                        CustomBrandInput(label: "GOOGLE REVIEW LINK", text: $invoiceManager.businessSettings.googleReviewLink, icon: "star.fill")
+                        NavigationLink(destination: ReviewSettingsView()) {
+                            HStack {
+                                Image(systemName: "star.fill")
+                                    .foregroundColor(Theme.amber500)
+                                Text("Manage Review Links & Templates")
+                                    .foregroundColor(.white)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(Theme.slate600)
+                            }
+                        }
                     }
                 }
                 

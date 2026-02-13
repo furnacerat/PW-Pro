@@ -202,6 +202,9 @@ struct CalendarView: View {
                 await scheduler.fetchJobs()
             }
         }
+        .sheet(isPresented: $showingAddJob) {
+            JobBookingView(invoice: nil)
+        }
     }
     }
     
